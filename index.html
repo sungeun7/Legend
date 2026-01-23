@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>횡스크롤 RPG 게임</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="ui-overlay ui-left">
+            <div class="health-bar-container">
+                <div class="health-label">체력</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="healthFill"></div>
+                </div>
+                <div class="health-text" id="healthText">100 / 100</div>
+            </div>
+            <div class="score-container">
+                <div class="score-label">점수</div>
+                <div class="score-value" id="scoreValue">0</div>
+            </div>
+            <div class="stage-container">
+                <div class="stage-label">스테이지</div>
+                <div class="stage-value" id="stageValue">1</div>
+            </div>
+            <div class="gold-container">
+                <div class="gold-label">골드</div>
+                <div class="gold-value" id="goldValue">0</div>
+            </div>
+        </div>
+        <div class="ui-overlay ui-right">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-label">힘</div>
+                    <div class="stat-value" id="attackValue">20</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">방어력</div>
+                    <div class="stat-value" id="defenseValue">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">속도</div>
+                    <div class="stat-value" id="speedValue">5</div>
+                </div>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <canvas id="minimapCanvas"></canvas>
+        <div class="controls">
+            <p><strong>조작법:</strong></p>
+            <p>← → : 이동 | ↑ : 점프 | 스페이스바 : 공격 | E : 상점 입장</p>
+        </div>
+        <div id="gameOverScreen" class="game-over hidden">
+            <h2>게임 오버</h2>
+            <p>최종 점수: <span id="finalScore">0</span></p>
+            <button id="restartButton">다시 시작</button>
+        </div>
+        <div id="statDistributionScreen" class="stat-distribution hidden">
+            <h2>스탯 포인트 분배</h2>
+            <p>스테이지 클리어 보상: <span id="availablePoints">1</span> 포인트</p>
+            <div class="stat-distribution-items">
+                <div class="stat-dist-item">
+                    <div class="stat-dist-label">힘</div>
+                    <div class="stat-dist-controls">
+                        <button class="stat-btn" id="attackMinus">-</button>
+                        <span class="stat-dist-value" id="attackPoints">0</span>
+                        <button class="stat-btn" id="attackPlus">+</button>
+                    </div>
+                    <div class="stat-dist-effect">공격력 +5/포인트</div>
+                </div>
+                <div class="stat-dist-item">
+                    <div class="stat-dist-label">방어력</div>
+                    <div class="stat-dist-controls">
+                        <button class="stat-btn" id="defenseMinus">-</button>
+                        <span class="stat-dist-value" id="defensePoints">0</span>
+                        <button class="stat-btn" id="defensePlus">+</button>
+                    </div>
+                    <div class="stat-dist-effect">방어력 +2/포인트</div>
+                </div>
+                <div class="stat-dist-item">
+                    <div class="stat-dist-label">속도</div>
+                    <div class="stat-dist-controls">
+                        <button class="stat-btn" id="speedMinus">-</button>
+                        <span class="stat-dist-value" id="speedPoints">0</span>
+                        <button class="stat-btn" id="speedPlus">+</button>
+                    </div>
+                    <div class="stat-dist-effect">속도 +0.5/포인트</div>
+                </div>
+            </div>
+            <button id="confirmStatButton">확인</button>
+        </div>
+        <div id="shopScreen" class="shop hidden">
+            <h2>상점</h2>
+            <div class="shop-items">
+                <div class="shop-item">
+                    <h3>나무 칼</h3>
+                    <p>공격력: +10</p>
+                    <p class="price">가격: 300골드</p>
+                    <button class="buy-btn" data-item="woodenSword">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>철 칼</h3>
+                    <p>공격력: +20</p>
+                    <p class="price">가격: 800골드</p>
+                    <button class="buy-btn" data-item="ironSword">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>강철 칼</h3>
+                    <p>공격력: +40</p>
+                    <p class="price">가격: 2000골드</p>
+                    <button class="buy-btn" data-item="steelSword">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>다이아몬드 칼</h3>
+                    <p>공격력: +70</p>
+                    <p class="price">가격: 5000골드</p>
+                    <button class="buy-btn" data-item="diamondSword">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>가죽 갑옷</h3>
+                    <p>방어력: +5, 체력: +20</p>
+                    <p class="price">가격: 500골드</p>
+                    <button class="buy-btn" data-item="leatherArmor">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>철 갑옷</h3>
+                    <p>방어력: +10, 체력: +40</p>
+                    <p class="price">가격: 1500골드</p>
+                    <button class="buy-btn" data-item="ironArmor">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>강철 갑옷</h3>
+                    <p>방어력: +15, 체력: +60</p>
+                    <p class="price">가격: 3500골드</p>
+                    <button class="buy-btn" data-item="steelArmor">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>다이아몬드 갑옷</h3>
+                    <p>방어력: +25, 체력: +100</p>
+                    <p class="price">가격: 8000골드</p>
+                    <button class="buy-btn" data-item="diamondArmor">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>체력 포션</h3>
+                    <p>체력 +50 회복</p>
+                    <p class="price">가격: 200골드</p>
+                    <button class="buy-btn" data-item="healthPotion">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>대형 체력 포션</h3>
+                    <p>체력 +100 회복</p>
+                    <p class="price">가격: 400골드</p>
+                    <button class="buy-btn" data-item="bigHealthPotion">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>최대 체력 증가</h3>
+                    <p>최대 체력 +20</p>
+                    <p class="price">가격: 600골드</p>
+                    <button class="buy-btn" data-item="maxHealth">구매</button>
+                </div>
+                <div class="shop-item">
+                    <h3>공격력 증가</h3>
+                    <p>기본 공격력 +5</p>
+                    <p class="price">가격: 1000골드</p>
+                    <button class="buy-btn" data-item="attackBoost">구매</button>
+                </div>
+            </div>
+            <button id="exitShopButton">상점 나가기 (다음 스테이지)</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
