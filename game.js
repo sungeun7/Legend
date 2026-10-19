@@ -22,6 +22,38 @@ let gameState = {
     statPoints: 0  // 스탯 포인트
 };
 
+// 상점 아이템 가격 (동적 관리)
+let shopPrices = {
+    woodenSword: 300,
+    ironSword: 800,
+    steelSword: 2000,
+    diamondSword: 5000,
+    leatherArmor: 500,
+    ironArmor: 1500,
+    steelArmor: 3500,
+    diamondArmor: 8000,
+    healthPotion: 200,
+    bigHealthPotion: 400,
+    maxHealth: 600,
+    attackBoost: 1000
+};
+
+// 상점에 표시되는 아이템 목록 (동적 관리)
+let availableShopItems = new Set([
+    'woodenSword',
+    'ironSword',
+    'steelSword',
+    'diamondSword',
+    'leatherArmor',
+    'ironArmor',
+    'steelArmor',
+    'diamondArmor',
+    'healthPotion',
+    'bigHealthPotion',
+    'maxHealth',
+    'attackBoost'
+]);
+
 // 사운드 시스템
 class SoundManager {
     constructor() {
@@ -926,6 +958,36 @@ function initGame() {
     gameState.stage = 1;
     gameState.gold = 0;
     
+    // 상점 아이템 초기화
+    shopPrices = {
+        woodenSword: 300,
+        ironSword: 800,
+        steelSword: 2000,
+        diamondSword: 5000,
+        leatherArmor: 500,
+        ironArmor: 1500,
+        steelArmor: 3500,
+        diamondArmor: 8000,
+        healthPotion: 200,
+        bigHealthPotion: 400,
+        maxHealth: 600,
+        attackBoost: 1000
+    };
+    availableShopItems = new Set([
+        'woodenSword',
+        'ironSword',
+        'steelSword',
+        'diamondSword',
+        'leatherArmor',
+        'ironArmor',
+        'steelArmor',
+        'diamondArmor',
+        'healthPotion',
+        'bigHealthPotion',
+        'maxHealth',
+        'attackBoost'
+    ]);
+    
     // 플레이어 생성 (플랫폼 위에 정확히 배치)
     const startPlatformY = canvas.height - 40;
     player = new Player(100, startPlatformY - 70);
@@ -1247,6 +1309,15 @@ function drawMinimap() {
 function openShop() {
     gameState.inShop = true;
     document.getElementById('shopScreen').classList.remove('hidden');
+    // 상점 아이템 표시/숨김 업데이트
+    document.querySelectorAll('.shop-item').forEach(item => {
+        const itemType = item.querySelector('.buy-btn')?.getAttribute('data-item');
+        if (itemType && !availableShopItems.has(itemType)) {
+            item.style.display = 'none';
+        } else if (itemType) {
+            item.style.display = 'block';
+        }
+    });
     updateShopButtons();
     soundManager.playShopEnter();
 }
@@ -1258,59 +1329,174 @@ function closeShop() {
     showStatDistribution();
 }
 
+// 상점 아이템 제거 및 다음 등급 추가
+function removeShopItem(itemType) {
+    availableShopItems.delete(itemType);
+    const shopItems = document.querySelector('.shop-items');
+    const itemElement = shopItems.querySelector(`[data-item="${itemType}"]`)?.closest('.shop-item');
+    if (itemElement) {
+        itemElement.remove();
+    }
+}
+
+// 상점 아이템 추가
+function addShopItem(itemType, price) {
+    availableShopItems.add(itemType);
+    shopPrices[itemType] = price;
+    
+    const shopItems = document.querySelector('.shop-items');
+    const existingItem = shopItems.querySelector(`[data-item="${itemType}"]`)?.closest('.shop-item');
+    
+    if (existingItem) {
+        // 이미 HTML에 있으면 가격만 업데이트하고 표시
+        existingItem.style.display = 'block';
+        const priceElement = existingItem.querySelector('.price');
+        if (priceElement) {
+            priceElement.textContent = `가격: ${price}골드`;
+        }
+    } else {
+        // HTML에 없으면 새로 추가
+        let itemHTML = '';
+        
+        switch(itemType) {
+            case 'woodenSword':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>나무 칼</h3>
+                        <p>공격력: +10</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="woodenSword">구매</button>
+                    </div>`;
+                break;
+            case 'ironSword':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>철 칼</h3>
+                        <p>공격력: +20</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="ironSword">구매</button>
+                    </div>`;
+                break;
+            case 'steelSword':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>강철 칼</h3>
+                        <p>공격력: +40</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="steelSword">구매</button>
+                    </div>`;
+                break;
+            case 'diamondSword':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>다이아몬드 칼</h3>
+                        <p>공격력: +70</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="diamondSword">구매</button>
+                    </div>`;
+                break;
+            case 'leatherArmor':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>가죽 갑옷</h3>
+                        <p>방어력: +5, 체력: +20</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="leatherArmor">구매</button>
+                    </div>`;
+                break;
+            case 'ironArmor':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>철 갑옷</h3>
+                        <p>방어력: +10, 체력: +40</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="ironArmor">구매</button>
+                    </div>`;
+                break;
+            case 'steelArmor':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>강철 갑옷</h3>
+                        <p>방어력: +15, 체력: +60</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="steelArmor">구매</button>
+                    </div>`;
+                break;
+            case 'diamondArmor':
+                itemHTML = `
+                    <div class="shop-item">
+                        <h3>다이아몬드 갑옷</h3>
+                        <p>방어력: +25, 체력: +100</p>
+                        <p class="price">가격: ${price}골드</p>
+                        <button class="buy-btn" data-item="diamondArmor">구매</button>
+                    </div>`;
+                break;
+        }
+        
+        if (itemHTML) {
+            shopItems.insertAdjacentHTML('beforeend', itemHTML);
+            // 새로 추가된 버튼에 이벤트 리스너 추가
+            const newBtn = shopItems.querySelector(`[data-item="${itemType}"]`);
+            if (newBtn) {
+                newBtn.addEventListener('click', () => {
+                    buyItem(itemType);
+                });
+            }
+        }
+    }
+}
+
 function updateShopButtons() {
     const buttons = document.querySelectorAll('.buy-btn');
     buttons.forEach(btn => {
         const item = btn.getAttribute('data-item');
-        let price = 0;
+        if (!availableShopItems.has(item)) {
+            btn.closest('.shop-item').style.display = 'none';
+            return;
+        }
+        
+        btn.closest('.shop-item').style.display = 'block';
+        const price = shopPrices[item] || 0;
+        const priceElement = btn.closest('.shop-item').querySelector('.price');
+        if (priceElement) {
+            priceElement.textContent = `가격: ${price}골드`;
+        }
         
         switch(item) {
             case 'woodenSword':
-                price = 300;
                 btn.disabled = gameState.gold < price || player.weapon === WEAPON_TYPES.WOODEN_SWORD;
                 break;
             case 'ironSword':
-                price = 800;
                 btn.disabled = gameState.gold < price || player.weapon === WEAPON_TYPES.IRON_SWORD;
                 break;
             case 'steelSword':
-                price = 2000;
                 btn.disabled = gameState.gold < price || player.weapon === WEAPON_TYPES.STEEL_SWORD;
                 break;
             case 'diamondSword':
-                price = 5000;
                 btn.disabled = gameState.gold < price || player.weapon === WEAPON_TYPES.DIAMOND_SWORD;
                 break;
             case 'leatherArmor':
-                price = 500;
                 btn.disabled = gameState.gold < price || player.armor === ARMOR_TYPES.LEATHER;
                 break;
             case 'ironArmor':
-                price = 1500;
                 btn.disabled = gameState.gold < price || player.armor === ARMOR_TYPES.IRON;
                 break;
             case 'steelArmor':
-                price = 3500;
                 btn.disabled = gameState.gold < price || player.armor === ARMOR_TYPES.STEEL;
                 break;
             case 'diamondArmor':
-                price = 8000;
                 btn.disabled = gameState.gold < price || player.armor === ARMOR_TYPES.DIAMOND;
                 break;
             case 'healthPotion':
-                price = 200;
                 btn.disabled = gameState.gold < price || player.health >= player.maxHealth;
                 break;
             case 'bigHealthPotion':
-                price = 400;
                 btn.disabled = gameState.gold < price || player.health >= player.maxHealth;
                 break;
             case 'maxHealth':
-                price = 600;
                 btn.disabled = gameState.gold < price;
                 break;
             case 'attackBoost':
-                price = 1000;
                 btn.disabled = gameState.gold < price;
                 break;
         }
@@ -1318,86 +1504,109 @@ function updateShopButtons() {
 }
 
 function buyItem(itemType) {
+    const price = shopPrices[itemType] || 0;
     let purchased = false;
     
     switch(itemType) {
         case 'woodenSword':
-            if (gameState.gold >= 300 && player.weapon !== WEAPON_TYPES.WOODEN_SWORD) {
-                gameState.gold -= 300;
+            if (gameState.gold >= price && player.weapon !== WEAPON_TYPES.WOODEN_SWORD) {
+                gameState.gold -= price;
                 player.weapon = WEAPON_TYPES.WOODEN_SWORD;
                 purchased = true;
+                // 나무 칼 제거, 철 칼 추가 (5배 가격)
+                removeShopItem('woodenSword');
+                addShopItem('ironSword', shopPrices['ironSword'] * 5);
             }
             break;
         case 'ironSword':
-            if (gameState.gold >= 800 && player.weapon !== WEAPON_TYPES.IRON_SWORD) {
-                gameState.gold -= 800;
+            if (gameState.gold >= price && player.weapon !== WEAPON_TYPES.IRON_SWORD) {
+                gameState.gold -= price;
                 player.weapon = WEAPON_TYPES.IRON_SWORD;
                 purchased = true;
+                // 철 칼 제거, 강철 칼 추가 (5배 가격)
+                removeShopItem('ironSword');
+                addShopItem('steelSword', shopPrices['steelSword'] * 5);
             }
             break;
         case 'steelSword':
-            if (gameState.gold >= 2000 && player.weapon !== WEAPON_TYPES.STEEL_SWORD) {
-                gameState.gold -= 2000;
+            if (gameState.gold >= price && player.weapon !== WEAPON_TYPES.STEEL_SWORD) {
+                gameState.gold -= price;
                 player.weapon = WEAPON_TYPES.STEEL_SWORD;
                 purchased = true;
+                // 강철 칼 제거, 다이아몬드 칼 추가 (5배 가격)
+                removeShopItem('steelSword');
+                addShopItem('diamondSword', shopPrices['diamondSword'] * 5);
             }
             break;
         case 'diamondSword':
-            if (gameState.gold >= 5000 && player.weapon !== WEAPON_TYPES.DIAMOND_SWORD) {
-                gameState.gold -= 5000;
+            if (gameState.gold >= price && player.weapon !== WEAPON_TYPES.DIAMOND_SWORD) {
+                gameState.gold -= price;
                 player.weapon = WEAPON_TYPES.DIAMOND_SWORD;
                 purchased = true;
+                // 다이아몬드 칼 제거 (더 이상 없음)
+                removeShopItem('diamondSword');
             }
             break;
         case 'leatherArmor':
-            if (gameState.gold >= 500 && player.armor !== ARMOR_TYPES.LEATHER) {
-                gameState.gold -= 500;
+            if (gameState.gold >= price && player.armor !== ARMOR_TYPES.LEATHER) {
+                gameState.gold -= price;
                 player.armor = ARMOR_TYPES.LEATHER;
                 player.updateMaxHealth();
                 purchased = true;
+                // 가죽 갑옷 제거, 철 갑옷 추가 (5배 가격)
+                removeShopItem('leatherArmor');
+                addShopItem('ironArmor', shopPrices['ironArmor'] * 5);
             }
             break;
         case 'ironArmor':
-            if (gameState.gold >= 1500 && player.armor !== ARMOR_TYPES.IRON) {
-                gameState.gold -= 1500;
+            if (gameState.gold >= price && player.armor !== ARMOR_TYPES.IRON) {
+                gameState.gold -= price;
                 player.armor = ARMOR_TYPES.IRON;
                 player.updateMaxHealth();
                 purchased = true;
+                // 철 갑옷 제거, 강철 갑옷 추가 (5배 가격)
+                removeShopItem('ironArmor');
+                addShopItem('steelArmor', shopPrices['steelArmor'] * 5);
             }
             break;
         case 'steelArmor':
-            if (gameState.gold >= 3500 && player.armor !== ARMOR_TYPES.STEEL) {
-                gameState.gold -= 3500;
+            if (gameState.gold >= price && player.armor !== ARMOR_TYPES.STEEL) {
+                gameState.gold -= price;
                 player.armor = ARMOR_TYPES.STEEL;
                 player.updateMaxHealth();
                 purchased = true;
+                // 강철 갑옷 제거, 다이아몬드 갑옷 추가 (5배 가격)
+                removeShopItem('steelArmor');
+                addShopItem('diamondArmor', shopPrices['diamondArmor'] * 5);
             }
             break;
         case 'diamondArmor':
-            if (gameState.gold >= 8000 && player.armor !== ARMOR_TYPES.DIAMOND) {
-                gameState.gold -= 8000;
+            if (gameState.gold >= price && player.armor !== ARMOR_TYPES.DIAMOND) {
+                gameState.gold -= price;
                 player.armor = ARMOR_TYPES.DIAMOND;
                 player.updateMaxHealth();
                 purchased = true;
+                // 다이아몬드 갑옷 제거 (더 이상 없음)
+                removeShopItem('diamondArmor');
             }
             break;
         case 'healthPotion':
-            if (gameState.gold >= 200 && player.health < player.maxHealth) {
-                gameState.gold -= 200;
+            if (gameState.gold >= price && player.health < player.maxHealth) {
+                gameState.gold -= price;
                 player.health = Math.min(player.maxHealth, player.health + 50);
                 purchased = true;
             }
             break;
         case 'bigHealthPotion':
-            if (gameState.gold >= 400 && player.health < player.maxHealth) {
-                gameState.gold -= 400;
+            if (gameState.gold >= price && player.health < player.maxHealth) {
+                gameState.gold -= price;
                 player.health = Math.min(player.maxHealth, player.health + 100);
                 purchased = true;
             }
             break;
         case 'maxHealth':
-            if (gameState.gold >= 600) {
-                gameState.gold -= 600;
+            if (gameState.gold >= price) {
+                gameState.gold -= price;
                 player.baseMaxHealth += 20;
                 player.updateMaxHealth();
                 player.health += 20;
@@ -1405,8 +1614,8 @@ function buyItem(itemType) {
             }
             break;
         case 'attackBoost':
-            if (gameState.gold >= 1000) {
-                gameState.gold -= 1000;
+            if (gameState.gold >= price) {
+                gameState.gold -= price;
                 // 모든 무기의 공격력 증가
                 Object.keys(WEAPONS).forEach(key => {
                     WEAPONS[key].damage += 5;
